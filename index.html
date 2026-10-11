@@ -478,7 +478,6 @@
                 gallery.appendChild(img);
             });
 
-            // Настройка кнопки построения маршрута (открытие приложения Я.Карт)
             const routeBtn = document.getElementById('sp-route-btn');
             routeBtn.innerHTML = 'ПОСТРОИТЬ МАРШРУТ';
             routeBtn.onclick = () => openYandexMapsRoute(store.coords);
@@ -506,22 +505,30 @@
             document.getElementById('lightbox').style.display = 'flex';
         }
 
-        // ОТКРЫТИЕ МАРШРУТА В ЯНДЕКС КАРТАХ
+        // ОТКРЫТИЕ МАРШРУТА ЧЕРЕЗ НАТИВНУЮ ГЕОЛОКАЦИЮ HTML5 (ОБХОД БЛОКИРОВОК ЯНДЕКСА)
         function openYandexMapsRoute(storeCoords) {
             const routeBtn = document.getElementById('sp-route-btn');
             routeBtn.innerHTML = 'ПОИСК ГЕОПОЗИЦИИ...';
             
-            // Получаем реальное местоположение
-            ymaps.geolocation.get({
-                provider: 'browser', 
-                enableHighAccuracy: true 
-            }).then(function (result) {
-                const userCoords = result.geoObjects.position;
-                openExternalRoute(userCoords, storeCoords);
-            }).catch(function (err) {
-                alert('Не удалось определить геопозицию. Строим маршрут от центра Москвы.');
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        // Успешно получили координаты напрямую из браузера
+                        const userCoords = [position.coords.latitude, position.coords.longitude];
+                        openExternalRoute(userCoords, storeCoords);
+                    },
+                    function(error) {
+                        // Ошибка (пользователь запретил или GPS выключен)
+                        console.warn("Ошибка гео:", error.message);
+                        alert('Не удалось получить доступ к геопозиции. Либо вы отклонили запрос, либо GPS отключен в системе. Строим маршрут от центра Москвы.');
+                        openExternalRoute([55.753215, 37.622504], storeCoords);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                alert('Ваш браузер не поддерживает геопозицию. Строим от центра Москвы.');
                 openExternalRoute([55.753215, 37.622504], storeCoords);
-            });
+            }
         }
 
         function openExternalRoute(startCoords, endCoords) {
