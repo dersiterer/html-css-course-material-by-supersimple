@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shoppy // Yandex Map MVP 5.0</title>
+    <title>Shoppy // Yandex Map MVP 7.0</title>
     <!-- Реальный Яндекс Карт API -->
     <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
     <style>
@@ -38,41 +38,40 @@
         /* ЛОГОТИП С ЯПОНСКОЙ НАДПИСЬЮ НА ФОНЕ */
         .header-logo {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 30px;
+            right: 30px;
             z-index: 100;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px 20px;
+            width: 250px;
+            height: 60px;
             pointer-events: none; /* Чтобы не мешал кликать по карте под ним */
         }
         
         .logo-bg {
             position: absolute;
             font-size: 55px;
-            color: rgba(255, 0, 0, 0.4); /* Полупрозрачный красный */
+            color: rgba(255, 0, 0, 0.35); /* Полупрозрачный красный фон */
             font-weight: bold;
-            letter-spacing: 2px;
             z-index: 1;
-            white-space: nowrap;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            right: -10px;
+            top: -15px;
             user-select: none;
+            letter-spacing: 2px;
+            font-family: sans-serif;
         }
 
         .logo-fg {
-            position: relative;
-            font-size: 32px;
+            position: absolute;
+            font-size: 38px;
             color: var(--text-color);
             border-bottom: 5px solid var(--accent-color);
             text-transform: uppercase;
             font-family: var(--font-main);
             font-weight: bold;
             z-index: 2;
+            right: 0;
+            bottom: 0;
             padding-bottom: 5px;
-            text-shadow: 2px 2px 0px #000; /* Чтобы текст лучше читался поверх японских иероглифов */
+            text-shadow: 2px 2px 0px #000; /* Контраст поверх иероглифов */
         }
 
         /* ГЛАВНОЕ МЕНЮ (СПИСОК И ФИЛЬТРЫ) */
@@ -189,9 +188,9 @@
         }
 
         @media (max-width: 768px) {
-            .header-logo { top: 10px; right: 10px; }
-            .logo-bg { font-size: 40px; }
-            .logo-fg { font-size: 24px; }
+            .header-logo { top: 10px; right: 10px; width: 180px; height: 40px;}
+            .logo-bg { font-size: 40px; right: -5px; top: -10px;}
+            .logo-fg { font-size: 24px; border-bottom: 3px solid var(--accent-color);}
             
             .ui-container { width: 90%; left: 5%; top: 10px; }
             #store-panel {
@@ -248,8 +247,9 @@
             cursor: pointer;
             text-transform: uppercase;
             transition: background 0.2s;
+            box-shadow: 0 4px 15px rgba(255,0,0,0.3);
         }
-        .route-btn:hover { background-color: #cc0000; }
+        .route-btn:hover { background-color: #cc0000; box-shadow: 0 6px 20px rgba(255,0,0,0.5); }
 
         /* LIGHTBOX */
         #lightbox {
@@ -328,7 +328,7 @@
             
             <div class="gallery" id="sp-gallery"></div>
             <p class="panel-desc" id="sp-desc">Описание</p>
-            <button class="route-btn" id="sp-route-btn">Построить маршрут</button>
+            <button class="route-btn" id="sp-route-btn">ПРОЛОЖИТЬ МАРШРУТ</button>
         </div>
     </div>
 
@@ -383,7 +383,6 @@
 
         let map;
         let placemarks = [];
-        let currentRoute = null;
 
         const storePanel = document.getElementById('store-panel');
         const mainUI = document.getElementById('main-ui');
@@ -478,12 +477,11 @@
                 gallery.appendChild(img);
             });
 
+            // Настройка кнопки маршрута - СНАЧАЛА ИЩЕМ ГЕОПОЗИЦИЮ, ПОТОМ ПЕРЕКИДЫВАЕМ
             const routeBtn = document.getElementById('sp-route-btn');
-            routeBtn.innerHTML = 'ПОСТРОИТЬ МАРШРУТ';
-            routeBtn.onclick = () => openYandexMapsRoute(store.coords);
+            routeBtn.onclick = () => openYandexMapsWithRealGeo(store.coords);
 
             map.balloon.close();
-
             storePanel.classList.add('active');
             
             if(window.innerWidth <= 768) {
@@ -505,41 +503,40 @@
             document.getElementById('lightbox').style.display = 'flex';
         }
 
-        // ОТКРЫТИЕ МАРШРУТА ЧЕРЕЗ НАТИВНУЮ ГЕОЛОКАЦИЮ HTML5 (ОБХОД БЛОКИРОВОК ЯНДЕКСА)
-        function openYandexMapsRoute(storeCoords) {
+        // --- УМНЫЙ ПЕРЕХОД В ЯНДЕКС КАРТЫ С КООРДИНАТАМИ ---
+        function openYandexMapsWithRealGeo(storeCoords) {
             const routeBtn = document.getElementById('sp-route-btn');
-            routeBtn.innerHTML = 'ПОИСК ГЕОПОЗИЦИИ...';
+            routeBtn.innerHTML = 'ИЩЕМ ГЕОПОЗИЦИЮ...';
             
+            // Если браузер поддерживает геолокацию
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
+                    // УСПЕХ: Пользователь разрешил, координаты получены
                     function(position) {
-                        // Успешно получили координаты напрямую из браузера
-                        const userCoords = [position.coords.latitude, position.coords.longitude];
-                        openExternalRoute(userCoords, storeCoords);
+                        routeBtn.innerHTML = 'ПРОЛОЖИТЬ МАРШРУТ'; // возвращаем текст
+                        const userLat = position.coords.latitude;
+                        const userLon = position.coords.longitude;
+                        
+                        // Строим ссылку, жестко прописывая координаты ОТ (user) ДО (store)
+                        const yandexUrl = `https://yandex.ru/maps/?rtext=${userLat},${userLon}~${storeCoords[0]},${storeCoords[1]}&rtt=pd`;
+                        window.open(yandexUrl, '_blank');
                     },
+                    // ОШИБКА: Пользователь запретил или нет датчика
                     function(error) {
-                        // Ошибка (пользователь запретил или GPS выключен)
+                        routeBtn.innerHTML = 'ПРОЛОЖИТЬ МАРШРУТ';
                         console.warn("Ошибка гео:", error.message);
-                        alert('Не удалось получить доступ к геопозиции. Либо вы отклонили запрос, либо GPS отключен в системе. Строим маршрут от центра Москвы.');
-                        openExternalRoute([55.753215, 37.622504], storeCoords);
+                        
+                        // Если ошибка, используем параметр ~, который заставит сам Яндекс запросить геопозицию
+                        const fallbackUrl = `https://yandex.ru/maps/?rtext=~${storeCoords[0]},${storeCoords[1]}&rtt=pd`;
+                        window.open(fallbackUrl, '_blank');
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             } else {
-                alert('Ваш браузер не поддерживает геопозицию. Строим от центра Москвы.');
-                openExternalRoute([55.753215, 37.622504], storeCoords);
-            }
-        }
-
-        function openExternalRoute(startCoords, endCoords) {
-            const routeBtn = document.getElementById('sp-route-btn');
-            routeBtn.innerHTML = 'ПОСТРОИТЬ МАРШРУТ'; // Сбрасываем текст
-
-            // Формируем URL для Яндекс Карт (rtt=pd означает пешеходный маршрут)
-            const yandexUrl = `https://yandex.ru/maps/?rtext=${startCoords[0]},${startCoords[1]}~${endCoords[0]},${endCoords[1]}&rtt=pd`;
-            
-            if(confirm('Открыть приложение или сайт Яндекс Карт для просмотра точного маршрута?')) {
-                window.open(yandexUrl, '_blank');
+                // Если браузер совсем древний
+                routeBtn.innerHTML = 'ПРОЛОЖИТЬ МАРШРУТ';
+                const fallbackUrl = `https://yandex.ru/maps/?rtext=~${storeCoords[0]},${storeCoords[1]}&rtt=pd`;
+                window.open(fallbackUrl, '_blank');
             }
         }
 
