@@ -1,249 +1,561 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>youtube.com Clone</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/general.css">
-    <link rel="stylesheet" href="styles/video.css">
-    <link rel="stylesheet" href="styles/header.css">
-    <link rel="stylesheet" href="styles/sidebar.css">
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoppy // Yandex Map MVP 5.0</title>
+    <!-- Реальный Яндекс Карт API -->
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --panel-bg: rgba(10, 10, 10, 0.95);
+            --text-color: #ffffff;
+            --accent-color: #ff0000;
+            --font-main: 'Courier New', Courier, monospace;
+        }
 
-  </head>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            overflow: hidden;
+        }
 
+        /* КАРТА */
+        #map {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
 
-  <body>
-    <header class="header">
-      <div class="left-section">
-        <img class="hamburger-menu" src="icons/hamburger-menu.svg">
-        <img class="youtube-logo" src="icons/youtube-logo.svg">
+        /* ЛОГОТИП С ЯПОНСКОЙ НАДПИСЬЮ НА ФОНЕ */
+        .header-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px 20px;
+            pointer-events: none; /* Чтобы не мешал кликать по карте под ним */
+        }
+        
+        .logo-bg {
+            position: absolute;
+            font-size: 55px;
+            color: rgba(255, 0, 0, 0.4); /* Полупрозрачный красный */
+            font-weight: bold;
+            letter-spacing: 2px;
+            z-index: 1;
+            white-space: nowrap;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            user-select: none;
+        }
 
-      </div>
-      <div class="middle-section">
-        <input class="search-bar" type="text" placeholder="Search">
-        <button class="search-button">
-          <img class="search-icon" src="icons/search.svg">
-          <div class="tooltip">Search</div>
+        .logo-fg {
+            position: relative;
+            font-size: 32px;
+            color: var(--text-color);
+            border-bottom: 5px solid var(--accent-color);
+            text-transform: uppercase;
+            font-family: var(--font-main);
+            font-weight: bold;
+            z-index: 2;
+            padding-bottom: 5px;
+            text-shadow: 2px 2px 0px #000; /* Чтобы текст лучше читался поверх японских иероглифов */
+        }
+
+        /* ГЛАВНОЕ МЕНЮ (СПИСОК И ФИЛЬТРЫ) */
+        .ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            width: 320px;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 3px solid var(--text-color);
+            box-shadow: 8px 8px 0px var(--accent-color);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 40px);
+            transition: opacity 0.3s;
+        }
+
+        .dropdown-toggle {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            font-family: var(--font-main);
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px;
+            cursor: pointer;
+            border: none;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dropdown-toggle:hover {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        .dropdown-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .dropdown-content.collapsed { display: none; }
+
+        .filters {
+            padding: 15px;
+            border-bottom: 2px dashed var(--accent-color);
+        }
+
+        .filters h3 { margin: 0 0 10px 0; color: var(--accent-color); font-size: 14px; text-transform: uppercase; }
+
+        .filter-btn {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--text-color);
+            padding: 5px 10px;
+            margin: 0 5px 5px 0;
+            font-family: var(--font-main);
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .filter-btn.active, .filter-btn:hover { background-color: var(--accent-color); border-color: var(--accent-color); color: var(--text-color); }
+
+        .store-list {
+            padding: 15px;
+            overflow-y: auto;
+            max-height: 350px;
+        }
+        
+        .store-list::-webkit-scrollbar { width: 5px; }
+        .store-list::-webkit-scrollbar-track { background: #000; }
+        .store-list::-webkit-scrollbar-thumb { background: #ff0000; }
+
+        .store-item {
+            border: 1px solid #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .store-item:hover { border-color: var(--text-color); background-color: rgba(255, 255, 255, 0.05); }
+        .store-item.hidden { display: none; }
+        .store-title { color: var(--text-color); font-size: 16px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase; }
+        .store-style { color: var(--accent-color); font-size: 12px; margin-bottom: 5px; }
+
+        /* КАРТОЧКА МАГАЗИНА (ВЫЕЗЖАЮЩАЯ) */
+        #store-panel {
+            position: absolute;
+            z-index: 100;
+            background-color: var(--panel-bg);
+            border: 2px solid var(--text-color);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        #store-panel::-webkit-scrollbar { width: 5px; }
+        #store-panel::-webkit-scrollbar-thumb { background: #ff0000; }
+
+        @media (min-width: 769px) {
+            #store-panel {
+                top: 0; left: -450px; width: 400px; height: 100vh;
+                border-left: none; border-top: none; border-bottom: none;
+            }
+            #store-panel.active { left: 0; }
+        }
+
+        @media (max-width: 768px) {
+            .header-logo { top: 10px; right: 10px; }
+            .logo-bg { font-size: 40px; }
+            .logo-fg { font-size: 24px; }
+            
+            .ui-container { width: 90%; left: 5%; top: 10px; }
+            #store-panel {
+                bottom: -100vh; left: 0; width: 100%; height: 85vh;
+                border-radius: 25px 25px 0 0;
+                border-bottom: none; border-left: none; border-right: none;
+            }
+            #store-panel.active { bottom: 0; }
+        }
+
+        .panel-header { padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #333; }
+        .panel-header h2 { margin: 0; font-size: 24px; text-transform: uppercase; color: var(--text-color); }
+        .close-btn { background: none; border: none; color: var(--text-color); font-size: 28px; cursor: pointer; line-height: 1; }
+        .close-btn:hover { color: var(--accent-color); }
+        .panel-content { padding: 20px; }
+
+        .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .tag { background: #222; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 12px; text-transform: uppercase; border: 1px solid #444; }
+        .tag.accent { border-color: var(--accent-color); color: var(--accent-color); }
+
+        /* ГАЛЕРЕЯ */
+        .gallery {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding-bottom: 15px;
+            scroll-snap-type: x mandatory;
+            margin-bottom: 20px;
+        }
+        .gallery::-webkit-scrollbar { height: 6px; }
+        .gallery::-webkit-scrollbar-track { background: #111; border-radius: 3px; }
+        .gallery::-webkit-scrollbar-thumb { background: var(--text-color); border-radius: 3px; }
+
+        .gallery img {
+            height: 200px; width: 150px; object-fit: cover;
+            border-radius: 10px; scroll-snap-align: start; flex-shrink: 0;
+            cursor: zoom-in; border: 1px solid #333; transition: border-color 0.2s;
+        }
+        .gallery img:hover { border-color: var(--accent-color); }
+
+        .panel-desc { font-size: 14px; line-height: 1.6; color: #ccc; margin-bottom: 30px; }
+
+        /* КНОПКА МАРШРУТА */
+        .route-btn {
+            width: 100%;
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            border: none;
+            padding: 15px;
+            font-family: var(--font-main);
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 50px; 
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s;
+        }
+        .route-btn:hover { background-color: #cc0000; }
+
+        /* LIGHTBOX */
+        #lightbox {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; cursor: zoom-out;
+        }
+        #lightbox img { max-width: 90%; max-height: 90%; border: 2px solid var(--accent-color); border-radius: 10px; }
+
+        /* --- ПОЛНОСТЬЮ ПЕРЕОПРЕДЕЛЯЕМ СТИЛИ БАЛУНА ЯНДЕКС КАРТ --- */
+        .ymaps-2-1-79-balloon {
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
+        .ymaps-2-1-79-balloon__layout {
+            background-color: rgba(10, 10, 10, 0.95) !important;
+            border: 2px solid var(--accent-color) !important;
+            border-radius: 15px !important;
+            box-shadow: 0 10px 25px rgba(255,0,0,0.4) !important;
+            backdrop-filter: blur(5px);
+        }
+        .ymaps-2-1-79-balloon__content {
+            padding: 0 !important;
+            background: transparent !important;
+        }
+        .ymaps-2-1-79-balloon__tail { display: none !important; }
+        .ymaps-2-1-79-balloon__close-button {
+            filter: invert(1);
+            opacity: 0.7;
+        }
+        .ymaps-2-1-79-balloon__close-button:hover { opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. КАРТА -->
+    <div id="map"></div>
+
+    <!-- 2. ЛОГОТИП С ИЕРОГЛИФАМИ НА ФОНЕ -->
+    <div class="header-logo">
+        <span class="logo-bg">ショッピー</span>
+        <span class="logo-fg">Shoppy</span>
+    </div>
+
+    <!-- 3. ГЛАВНОЕ МЕНЮ -->
+    <div class="ui-container" id="main-ui">
+        <button class="dropdown-toggle" id="dropdownBtn">
+            <span>МАГАЗИНЫ</span>
+            <span id="dropdownIcon">▲</span>
         </button>
-        <!-- Put position absolute inside position relative-->
-        <button class="voice-search-button">
-          <img class="voice-search-icon" src="icons/voice-search-icon.svg">
-          <div class="tooltip">Search with your voice</div>
-        </button>
-      </div>
-      <div class="right-section">
-        <div class="upload-icon-container">
-          <img class="upload-icon" src="icons/upload.svg">
-          <div class="tooltip">Create</div>
-        </div>
-        <div class="youtube-apps-icon-container">
-          <img class="youtube-apps-icon" src="icons/youtube-apps.svg">
-          <div class="tooltip">YouTube apps</div>
-        </div>
-        <div class="notifications-icon-container">
-          <img class="notifications-icon" src="icons/notifications.svg">
-          <div class="notifications-counter">3</div>
-          <div class="tooltip">Notifications</div>
-        </div>
-          <img class="current-user-picture" src="channel-pictures/my-channel.jpeg">
-        </div>
-      </div>
-      
-    </header>
 
-
-    <nav class="sidebar">
-      <div class="sidebar-link">
-        <img src="icons/home.svg">
-        <p>Home</p>
-      </div>
-      <div class="sidebar-link">
-        <img src="icons/explore.svg">
-        <p>Explore</p>
-      </div>
-      <div class="sidebar-link">
-        <img src="icons/subscriptions.svg">
-        <p>Subscriptions</p>
-      </div>
-      <div class="sidebar-link">
-        <img src="icons/originals.svg">
-        <p>Originals</p>
-      </div>
-      <div class="sidebar-link">
-        <img src="icons/youtube-music.svg">
-        <p>YouTube Music</p>
-      </div>
-      <div class="sidebar-link">
-        <img src="icons/library.svg">
-        <p>Library</p>
-      </div>
-    </nav>
-    
-    <main>
-      <section class="video-grid">  
-        <div class="video-preview">
-          <div class="thumbnail-row">
-            <a href="https://www.youtube.com/watch?v=n2RNcPRtAiY">
-              <img class="thumbnail" src="thumbnails/thumbnail-1.webp">
-            </a>
-            <div class="video-time">14:20</div>
-          </div>
-          <div class= "video-info-grid">
-            <div class="channel-picture">
-              <div class="profile-picture-container">
-                <img class=profile-picture src="channel-pictures/channel-1.jpeg">
-                <div class="tooltip">
-                  <img class=tooltip-profile-picture src="channel-pictures/channel-1.jpeg">
-                  <div class="author-info">
-                    <p class="video-author">Margues Brownlee</p>
-                    <p class="video-author-subs">15M subscribers<p></p>
-                  </div>
-                </div>
-              </div>
+        <div class="dropdown-content" id="dropdownContent">
+            <div class="filters">
+                <h3>СТИЛЬ:</h3>
+                <button class="filter-btn active" data-filter="all">ВСЕ</button>
+                <button class="filter-btn" data-filter="avangard">Авангард</button>
+                <button class="filter-btn" data-filter="techwear">Теквир</button>
+                <button class="filter-btn" data-filter="vintage">Винтаж</button>
             </div>
-            <div class="video-info">
-              <a href="https://www.youtube.com/watch?v=n2RNcPRtAiY">
-                <p class="video-title">
-                Talking Tech and AI with Google CEO Sundar Pichai!
-                </p>
-              </a>
-              
-              <p class="video-author">
-                Marques Brownlee
-              </p>
-              <p class="video-stats">
-                3.4M views &#183 6 months ago
-              </p>
+            <div class="store-list" id="storeList"></div>
+        </div>
+    </div>
+
+    <!-- 4. КАРТОЧКА МАГАЗИНА -->
+    <div id="store-panel">
+        <div class="panel-header">
+            <h2 id="sp-name">Название</h2>
+            <button class="close-btn" onclick="closeStorePanel()">×</button>
+        </div>
+        <div class="panel-content">
+            <div class="tags-container">
+                <span class="tag accent" id="sp-style">Стиль</span>
+                <span class="tag" id="sp-price">$$$</span>
+                <span class="tag" id="sp-dist" id="distance-tag">Дистанция</span>
             </div>
             
-            
-          </div> 
+            <div class="gallery" id="sp-gallery"></div>
+            <p class="panel-desc" id="sp-desc">Описание</p>
+            <button class="route-btn" id="sp-route-btn">Построить маршрут</button>
         </div>
+    </div>
+
+    <!-- 5. LIGHTBOX -->
+    <div id="lightbox" onclick="this.style.display='none'">
+        <img id="lightbox-img" src="" alt="Zoomed image">
+    </div>
+
+    <!-- ЛОГИКА -->
+    <script>
+        const stores = [
+            {
+                id: 1,
+                name: "VOID STORE",
+                style: "avangard", styleName: "АВАНГАРД",
+                price: "Высокая цена", distance: "Центр",
+                desc: "Темный концепт-стор с асимметричным кроем. Эксклюзивные дропы от локальных дизайнеров, работающих с деконструкцией. Вход через арку, дверь без вывески.",
+                coords: [55.761244, 37.618423],
+                photos: [
+                    "https://picsum.photos/seed/void1/400/600",
+                    "https://picsum.photos/seed/void2/400/600",
+                    "https://picsum.photos/seed/void3/400/600"
+                ]
+            },
+            {
+                id: 2,
+                name: "CYBER CITY",
+                style: "techwear", styleName: "ТЕКВИР",
+                price: "Средняя цена", distance: "Арбат",
+                desc: "Технологичная одежда, много карманов, Gore-Tex мембраны и стропы. Идеально для городских ниндзя. Только по предварительной записи.",
+                coords: [55.742023, 37.598711],
+                photos: [
+                    "https://picsum.photos/seed/cyber1/400/600",
+                    "https://picsum.photos/seed/cyber2/400/600",
+                    "https://picsum.photos/seed/cyber3/400/600"
+                ]
+            },
+            {
+                id: 3,
+                name: "ARCHIVE 99",
+                style: "vintage", styleName: "ВИНТАЖ",
+                price: "Очень дорого", distance: "Китай-Город",
+                desc: "Редкий японский архив, вещи с показов 90-х и нулевых. Коллекционные айтемы, которые нельзя найти в обычных секондах.",
+                coords: [55.757131, 37.631698],
+                photos: [
+                    "https://picsum.photos/seed/arch1/400/600",
+                    "https://picsum.photos/seed/arch2/400/600",
+                    "https://picsum.photos/seed/arch3/400/600"
+                ]
+            }
+        ];
+
+        let map;
+        let placemarks = [];
+        let currentRoute = null;
+
+        const storePanel = document.getElementById('store-panel');
+        const mainUI = document.getElementById('main-ui');
         
-        <div class="video-preview">
-          <div class="thumbnail-row">
-            <img class="thumbnail" src="thumbnails/thumbnail-2.webp">
-            <div class="video-time">8:22</div>
-          </div>
-          <div class="video-info-grid">
-            <div class="channel-picture">
-              <img class=profile-picture src="channel-pictures/channel-2.jpeg">
-              
-            </div>
-            <div class="video-info">
-              <p class="video-title">
-                Try Not To Laugh Challenge #9
-              </p>
-              <p class="video-author">
-                Markiplier
-              </p>
-              <p class="video-stats">
-                19M views &#183 4 years ago
-              </p>
-            </div>
-          </div> 
-        </div>
+        const dropdownBtn = document.getElementById('dropdownBtn');
+        const dropdownContent = document.getElementById('dropdownContent');
+        const dropdownIcon = document.getElementById('dropdownIcon');
 
-        <div class="video-preview">
-          <div class="thumbnail-row">
-            <img class="thumbnail" src="thumbnails/thumbnail-3.webp">
-            <div class="video-time">9:13</div>
-          </div>
-          <div class= "video-info-grid">
-            <div class="channel-picture">
-              <img class=profile-picture src="channel-pictures/channel-3.jpeg">
-            </div>
-            <div class="video-info">
-              <p class="video-title">
-                Crazy Tik Toks Taken Moments Before DISASTER
-              </p>
-              <p class="video-author">
-                SSSniperWolf
-              </p>
-              <p class="video-stats">
-                12M views &#183 1 year ago
-              </p>
-            </div>
-            
-            
-          </div> 
-        </div>
-        
-        <div class="video-preview">
-          <div class="thumbnail-row">
-            <img class="thumbnail" src="thumbnails/thumbnail-4.webp">
-            <div class="video-time">22:09</div>
-          </div>
-          <div class="video-info-grid">
-            <div class="channel-picture">
-              <img class=profile-picture src="channel-pictures/channel-4.jpeg">
-            </div>
-            <div class="video-info">
-              <p class="video-title">
-                The Simplest Math Problem No One Can Solve - Collatz Conjecture
-              </p>
-              <p class="video-author">
-                Veritasium
-              </p>
-              <p class="video-stats">
-                18M views &#183 4 months ago
-              </p>
-            </div>
-          </div> 
-        </div>
+        dropdownBtn.addEventListener('click', () => {
+            dropdownContent.classList.toggle('collapsed');
+            dropdownIcon.textContent = dropdownContent.classList.contains('collapsed') ? '▼' : '▲';
+        });
 
-        <div class="video-preview">
-          <div class="thumbnail-row">
-            <img class="thumbnail" src="thumbnails/thumbnail-5.webp">
-            <div class="video-time">11:17</div>
-          </div>
-          <div class= "video-info-grid">
-            <div class="channel-picture">
-              <img class=profile-picture src="channel-pictures/channel-5.jpeg">
-            </div>
-            <div class="video-info">
-              <p class="video-title">
-                Kadane's Algorithm to Maximum Sum Subarray Problem
-              </p>
-              <p class="video-author">
-                CS Dojo
-              </p>
-              <p class="video-stats">
-                519К views &#183 5 years ago
-              </p>
-            </div>
-            
-            
-          </div> 
-        </div>
-        
-        <div class="video-preview">
-          <div class="thumbnail-row">
-            <img class="thumbnail" src="thumbnails/thumbnail-6.webp">
-            <div class="video-time">19:59</div>
-          </div>
-          <div class="video-info-grid">
-            <div class="channel-picture">
-              <img class=profile-picture src="channel-pictures/channel-6.jpeg">
-            </div>
-            <div class="video-info">
-              <p class="video-title">
-                Anything You Can Fit In The Circle I’ll Pay For
-              </p>
-              <p class="video-author">
-                MrBeast
-              </p>
-              <p class="video-stats">
-                141M views &#183 1 year ago
-              </p>
-            </div>
-          </div> 
-        </div>
-      </section>
-    </main>
+        const storeList = document.getElementById('storeList');
+        function renderList() {
+            storeList.innerHTML = '';
+            stores.forEach(store => {
+                const item = document.createElement('div');
+                item.className = 'store-item';
+                item.dataset.style = store.style;
+                item.innerHTML = `
+                    <h4 class="store-title">${store.name}</h4>
+                    <div class="store-style">[ ${store.styleName} ]</div>
+                `;
+                item.addEventListener('click', () => {
+                    if (map) map.setCenter(store.coords, 15, { duration: 400 });
+                    openStorePanel(store.id); 
+                });
+                storeList.appendChild(item);
+            });
+        }
 
-    
+        ymaps.ready(initMap);
 
-  </body>
+        function initMap() {
+            map = new ymaps.Map("map", {
+                center: [55.753215, 37.622504],
+                zoom: 13,
+                controls: [] 
+            });
+
+            document.querySelector('.ymaps-2-1-79-map').style.filter = 'grayscale(1) invert(1) contrast(1.1)';
+
+            const circleLayout = ymaps.templateLayoutFactory.createClass(
+                '<div style="width:20px; height:20px; background-color:#ffffff; border:3px solid #ff0000; border-radius:50%; box-sizing:border-box; box-shadow: 0 0 10px rgba(0,0,0,0.8); transform: translate(-10px, -10px);"></div>'
+            );
+
+            stores.forEach(store => {
+                const balloonHTML = `
+                    <div style="padding: 20px 15px 15px; text-align: center; min-width: 180px;">
+                        <h3 style="margin: 0 0 5px 0; color: #fff; font-family: 'Courier New', monospace; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">${store.name}</h3>
+                        <div style="color: #ff0000; font-size: 12px; margin-bottom: 15px; font-family: 'Courier New', monospace; font-weight: bold;">[ ${store.styleName} ]</div>
+                        <button style="background: #fff; color: #000; border: none; padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-family: 'Courier New', monospace; font-size: 14px; transition: 0.2s;" 
+                        onmouseover="this.style.background='#ff0000'; this.style.color='#fff';" 
+                        onmouseout="this.style.background='#fff'; this.style.color='#000';"
+                        onclick="window.openStorePanel(${store.id})">ОТКРЫТЬ КАРТОЧКУ</button>
+                    </div>
+                `;
+
+                const placemark = new ymaps.Placemark(store.coords, {
+                    balloonContent: balloonHTML,
+                    hintContent: store.name
+                }, {
+                    iconLayout: circleLayout,
+                    iconShape: { type: 'Circle', coordinates: [0, 0], radius: 10 }
+                });
+                
+                placemark.storeId = store.id;
+                placemark.storeStyle = store.style;
+                
+                placemarks.push(placemark);
+                map.geoObjects.add(placemark);
+            });
+        }
+
+        window.openStorePanel = function(id) {
+            const store = stores.find(s => s.id === id);
+            if(!store) return;
+
+            document.getElementById('sp-name').textContent = store.name;
+            document.getElementById('sp-style').textContent = store.styleName;
+            document.getElementById('sp-price').textContent = store.price;
+            document.getElementById('sp-dist').textContent = store.distance;
+            document.getElementById('sp-desc').textContent = store.desc;
+
+            const gallery = document.getElementById('sp-gallery');
+            gallery.innerHTML = '';
+            store.photos.forEach(photoUrl => {
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                img.onclick = () => openLightbox(photoUrl);
+                gallery.appendChild(img);
+            });
+
+            // Настройка кнопки построения маршрута (открытие приложения Я.Карт)
+            const routeBtn = document.getElementById('sp-route-btn');
+            routeBtn.innerHTML = 'ПОСТРОИТЬ МАРШРУТ';
+            routeBtn.onclick = () => openYandexMapsRoute(store.coords);
+
+            map.balloon.close();
+
+            storePanel.classList.add('active');
+            
+            if(window.innerWidth <= 768) {
+                mainUI.style.opacity = '0';
+                mainUI.style.pointerEvents = 'none';
+            }
+        };
+
+        window.closeStorePanel = function() {
+            storePanel.classList.remove('active');
+            if(window.innerWidth <= 768) {
+                mainUI.style.opacity = '1';
+                mainUI.style.pointerEvents = 'auto';
+            }
+        };
+
+        function openLightbox(url) {
+            document.getElementById('lightbox-img').src = url;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        // ОТКРЫТИЕ МАРШРУТА В ЯНДЕКС КАРТАХ
+        function openYandexMapsRoute(storeCoords) {
+            const routeBtn = document.getElementById('sp-route-btn');
+            routeBtn.innerHTML = 'ПОИСК ГЕОПОЗИЦИИ...';
+            
+            // Получаем реальное местоположение
+            ymaps.geolocation.get({
+                provider: 'browser', 
+                enableHighAccuracy: true 
+            }).then(function (result) {
+                const userCoords = result.geoObjects.position;
+                openExternalRoute(userCoords, storeCoords);
+            }).catch(function (err) {
+                alert('Не удалось определить геопозицию. Строим маршрут от центра Москвы.');
+                openExternalRoute([55.753215, 37.622504], storeCoords);
+            });
+        }
+
+        function openExternalRoute(startCoords, endCoords) {
+            const routeBtn = document.getElementById('sp-route-btn');
+            routeBtn.innerHTML = 'ПОСТРОИТЬ МАРШРУТ'; // Сбрасываем текст
+
+            // Формируем URL для Яндекс Карт (rtt=pd означает пешеходный маршрут)
+            const yandexUrl = `https://yandex.ru/maps/?rtext=${startCoords[0]},${startCoords[1]}~${endCoords[0]},${endCoords[1]}&rtt=pd`;
+            
+            if(confirm('Открыть приложение или сайт Яндекс Карт для просмотра точного маршрута?')) {
+                window.open(yandexUrl, '_blank');
+            }
+        }
+
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                const selectedStyle = e.target.dataset.filter;
+
+                document.querySelectorAll('.store-item').forEach(item => {
+                    item.classList.toggle('hidden', selectedStyle !== 'all' && item.dataset.style !== selectedStyle);
+                });
+
+                placemarks.forEach(pm => {
+                    const isVisible = selectedStyle === 'all' || pm.storeStyle === selectedStyle;
+                    pm.options.set('visible', isVisible);
+                    if(!isVisible) pm.balloon.close();
+                });
+            });
+        });
+
+        renderList();
+    </script>
+</body>
 </html>
