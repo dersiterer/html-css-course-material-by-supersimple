@@ -3,563 +3,451 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shoppy // Yandex Map MVP 7.0</title>
-    <!-- Реальный Яндекс Карт API -->
-    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+    <title>Shoppy landing</title>
     <style>
         :root {
-            --bg-color: #000000;
-            --panel-bg: rgba(10, 10, 10, 0.95);
-            --text-color: #ffffff;
-            --accent-color: #ff0000;
-            --font-main: 'Courier New', Courier, monospace;
+            --bg-color: #050505;
+            --text-main: #f0f0f0;
+            --text-dim: #888888;
+            --accent: #ff0033;
+            --border-stark: #333333;
+            
+            --font-sans: 'Helvetica Neue', Arial, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
         }
 
-        body, html {
+        * {
             margin: 0;
             padding: 0;
-            height: 100%;
-            width: 100%;
-            font-family: var(--font-main);
-            background-color: var(--bg-color);
-            overflow: hidden;
+            box-sizing: border-box;
+            border-radius: 0 !important; /* Strict brutalism: absolutely no curves */
         }
 
-        /* КАРТА */
-        #map {
-            width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
+        html {
+            scroll-behavior: auto; /* Instant jump */
         }
 
-        /* ЛОГОТИП С ЯПОНСКОЙ НАДПИСЬЮ НА ФОНЕ */
-        .header-logo {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            z-index: 100;
-            width: 250px;
-            height: 60px;
-            pointer-events: none; /* Чтобы не мешал кликать по карте под ним */
-        }
-        
-        .logo-bg {
-            position: absolute;
-            font-size: 55px;
-            color: rgba(255, 0, 0, 0.35); /* Полупрозрачный красный фон */
-            font-weight: bold;
-            z-index: 1;
-            right: -10px;
-            top: -15px;
-            user-select: none;
-            letter-spacing: 2px;
-            font-family: sans-serif;
-        }
-
-        .logo-fg {
-            position: absolute;
-            font-size: 38px;
-            color: var(--text-color);
-            border-bottom: 5px solid var(--accent-color);
-            text-transform: uppercase;
-            font-family: var(--font-main);
-            font-weight: bold;
-            z-index: 2;
-            right: 0;
-            bottom: 0;
-            padding-bottom: 5px;
-            text-shadow: 2px 2px 0px #000; /* Контраст поверх иероглифов */
-        }
-
-        /* ГЛАВНОЕ МЕНЮ (СПИСОК И ФИЛЬТРЫ) */
-        .ui-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            width: 320px;
-            background-color: rgba(0, 0, 0, 0.9);
-            border: 3px solid var(--text-color);
-            box-shadow: 8px 8px 0px var(--accent-color);
-            display: flex;
-            flex-direction: column;
-            max-height: calc(100vh - 40px);
-            transition: opacity 0.3s;
-        }
-
-        .dropdown-toggle {
-            background-color: var(--text-color);
+        ::selection {
+            background-color: var(--accent);
             color: var(--bg-color);
-            font-family: var(--font-main);
-            font-size: 18px;
-            font-weight: bold;
-            padding: 15px;
-            cursor: pointer;
-            border: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.5;
+            overflow-x: hidden;
+            border-left: 1px solid var(--border-stark);
+            border-right: 1px solid var(--border-stark);
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        h1, h2, h3 {
             text-transform: uppercase;
+            font-weight: 900;
+        }
+
+        .tech-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .tech-label .highlight {
+            color: var(--accent);
+        }
+
+        .link_to_map,
+        .link_to_map:link,
+        .link_to_map:visited,
+        .link_to_map:hover,
+        .link_to_map:active,
+        .link_to_map:focus{
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            background-color: transparent;
+            color: var(--accent);
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            padding: 1.2rem 2.5rem;
+            border: 1px solid var(--accent);
+            cursor: pointer;
+            transition: all 0s; /* Brutalist instant transition */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn::before {
+            content: "[ ";
+            margin-right: 0.5rem;
+        }
+
+        .btn::after {
+            content: " ]";
+            margin-left: 0.5rem;
+        }
+
+        .btn:hover {
+            background-color: var(--accent);
+            color: var(--bg-color);
+        }
+
+        .header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-        
-        .dropdown-toggle:hover {
-            background-color: var(--accent-color);
-            color: var(--text-color);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-stark);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            background-color: var(--bg-color);
+            z-index: 100;
         }
 
-        .dropdown-content {
+        .header .version {
+            color: var(--accent);
+        }
+
+        section {
+            padding: clamp(4rem, 8vw, 8rem) clamp(1rem, 4vw, 4rem);
+            border-bottom: 1px solid var(--border-stark);
+            position: relative;
+        }
+
+        .hero {
+            min-height: 80vh;
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
             overflow: hidden;
-            transition: max-height 0.3s ease;
         }
 
-        .dropdown-content.collapsed { display: none; }
-
-        .filters {
-            padding: 15px;
-            border-bottom: 2px dashed var(--accent-color);
+        .hero-title-container {
+            position: relative;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            width: 100%;
         }
 
-        .filters h3 { margin: 0 0 10px 0; color: var(--accent-color); font-size: 14px; text-transform: uppercase; }
+        /* Background Japanese Text */
+        .hero-bg-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(4rem, 18vw, 15rem);
+            color: var(--accent);
+            z-index: 0;
+            pointer-events: none;
+            white-space: nowrap;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            opacity: 0.4;
+        }
 
-        .filter-btn {
-            background-color: transparent;
-            color: var(--text-color);
-            border: 1px solid var(--text-color);
-            padding: 5px 10px;
-            margin: 0 5px 5px 0;
-            font-family: var(--font-main);
-            font-size: 12px;
-            cursor: pointer;
+        /* Main English Title */
+        .hero h1 {
+            font-size: clamp(4rem, 15vw, 12rem);
+            line-height: 1;
+            letter-spacing: -0.05em;
+            color: var(--text-main);
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-slogan {
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            max-width: 700px;
+            margin: 2rem auto 4rem;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+            position: relative;
+            z-index: 1;
+        }
+
+        .problem-box {
+            border: 1px solid var(--border-stark);
+            padding: clamp(2rem, 5vw, 4rem);
+            position: relative;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(51, 51, 51, 0.1),
+                rgba(51, 51, 51, 0.1) 2px,
+                transparent 2px,
+                transparent 10px
+            );
+        }
+
+        .problem-box::before {
+            content: "ERROR_LOG";
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background-color: var(--accent);
+            color: var(--bg-color);
+            padding: 0 10px;
+            font-family: var(--font-mono);
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            margin-bottom: 2rem;
+            line-height: 1.1;
+        }
+
+        .problem-text {
+            font-size: clamp(1.1rem, 2vw, 1.5rem);
+            color: var(--text-main);
+            max-width: 900px;
+            line-height: 1.6;
+        }
+
+        .solution-desc {
+            font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+            margin-bottom: 4rem;
+            font-weight: bold;
+            border-left: 2px solid var(--accent);
+            padding-left: 1.5rem;
+        }
+
+        .grid-1px {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1px;
+            background-color: var(--border-stark);
+            border: 1px solid var(--border-stark);
+        }
+
+        .card {
+            background-color: var(--bg-color);
+            padding: 3rem 2rem;
+            position: relative;
+            transition: 0s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            background-color: var(--text-main);
+            color: var(--bg-color);
+        }
+
+        .card:hover .crosshair {
+            border-color: var(--bg-color);
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 20px;
+            height: 20px;
+            border-top: 2px solid var(--accent);
+            border-right: 2px solid var(--accent);
+        }
+
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .step-row {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: clamp(1.5rem, 4vw, 3rem);
+            border: 1px solid var(--border-stark);
+            padding: 2rem;
+            transition: 0s;
+        }
+
+        .step-row:hover {
+            border-color: var(--accent);
+            background-color: rgba(255, 0, 51, 0.05);
+        }
+
+        .step-num {
+            font-family: var(--font-mono);
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: bold;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .step-content {
+            font-size: clamp(1.1rem, 2vw, 1.5rem);
+            font-weight: bold;
+        }
+
+        .team-box {
+            border: 1px solid var(--border-stark);
+            padding: 4rem 2rem;
+            text-align: center;
+            background-color: var(--bg-color);
+            position: relative;
+        }
+
+        .team-box::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: var(--accent);
+        }
+
+        .team-box h3 {
+            font-size: clamp(1.5rem, 4vw, 3rem);
+            color: var(--text-main);
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .team-box p {
+            font-family: var(--font-mono);
+            color: var(--text-dim);
             text-transform: uppercase;
         }
 
-        .filter-btn.active, .filter-btn:hover { background-color: var(--accent-color); border-color: var(--accent-color); color: var(--text-color); }
-
-        .store-list {
-            padding: 15px;
-            overflow-y: auto;
-            max-height: 350px;
-        }
-        
-        .store-list::-webkit-scrollbar { width: 5px; }
-        .store-list::-webkit-scrollbar-track { background: #000; }
-        .store-list::-webkit-scrollbar-thumb { background: #ff0000; }
-
-        .store-item {
-            border: 1px solid #333;
-            padding: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-        .store-item:hover { border-color: var(--text-color); background-color: rgba(255, 255, 255, 0.05); }
-        .store-item.hidden { display: none; }
-        .store-title { color: var(--text-color); font-size: 16px; font-weight: bold; margin: 0 0 5px 0; text-transform: uppercase; }
-        .store-style { color: var(--accent-color); font-size: 12px; margin-bottom: 5px; }
-
-        /* КАРТОЧКА МАГАЗИНА (ВЫЕЗЖАЮЩАЯ) */
-        #store-panel {
-            position: absolute;
-            z-index: 100;
-            background-color: var(--panel-bg);
-            border: 2px solid var(--text-color);
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        .footer {
+            padding: 4rem 2rem;
             display: flex;
             flex-direction: column;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-            overflow-y: auto;
-            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            text-align: center;
         }
 
-        #store-panel::-webkit-scrollbar { width: 5px; }
-        #store-panel::-webkit-scrollbar-thumb { background: #ff0000; }
-
-        @media (min-width: 769px) {
-            #store-panel {
-                top: 0; left: -450px; width: 400px; height: 100vh;
-                border-left: none; border-top: none; border-bottom: none;
-            }
-            #store-panel.active { left: 0; }
+        .footer-brand {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            color: var(--text-dim);
+            letter-spacing: 0.2em;
         }
 
         @media (max-width: 768px) {
-            .header-logo { top: 10px; right: 10px; width: 180px; height: 40px;}
-            .logo-bg { font-size: 40px; right: -5px; top: -10px;}
-            .logo-fg { font-size: 24px; border-bottom: 3px solid var(--accent-color);}
-            
-            .ui-container { width: 90%; left: 5%; top: 10px; }
-            #store-panel {
-                bottom: -100vh; left: 0; width: 100%; height: 85vh;
-                border-radius: 25px 25px 0 0;
-                border-bottom: none; border-left: none; border-right: none;
+            .header {
+                align-items: center;
             }
-            #store-panel.active { bottom: 0; }
+            .step-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                text-align: center;
+            }
         }
-
-        .panel-header { padding: 20px; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #333; }
-        .panel-header h2 { margin: 0; font-size: 24px; text-transform: uppercase; color: var(--text-color); }
-        .close-btn { background: none; border: none; color: var(--text-color); font-size: 28px; cursor: pointer; line-height: 1; }
-        .close-btn:hover { color: var(--accent-color); }
-        .panel-content { padding: 20px; }
-
-        .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .tag { background: #222; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 12px; text-transform: uppercase; border: 1px solid #444; }
-        .tag.accent { border-color: var(--accent-color); color: var(--accent-color); }
-
-        /* ГАЛЕРЕЯ */
-        .gallery {
-            display: flex;
-            overflow-x: auto;
-            gap: 15px;
-            padding-bottom: 15px;
-            scroll-snap-type: x mandatory;
-            margin-bottom: 20px;
-        }
-        .gallery::-webkit-scrollbar { height: 6px; }
-        .gallery::-webkit-scrollbar-track { background: #111; border-radius: 3px; }
-        .gallery::-webkit-scrollbar-thumb { background: var(--text-color); border-radius: 3px; }
-
-        .gallery img {
-            height: 200px; width: 150px; object-fit: cover;
-            border-radius: 10px; scroll-snap-align: start; flex-shrink: 0;
-            cursor: zoom-in; border: 1px solid #333; transition: border-color 0.2s;
-        }
-        .gallery img:hover { border-color: var(--accent-color); }
-
-        .panel-desc { font-size: 14px; line-height: 1.6; color: #ccc; margin-bottom: 30px; }
-
-        /* КНОПКА МАРШРУТА */
-        .route-btn {
-            width: 100%;
-            background-color: var(--accent-color);
-            color: var(--text-color);
-            border: none;
-            padding: 15px;
-            font-family: var(--font-main);
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 50px; 
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: background 0.2s;
-            box-shadow: 0 4px 15px rgba(255,0,0,0.3);
-        }
-        .route-btn:hover { background-color: #cc0000; box-shadow: 0 6px 20px rgba(255,0,0,0.5); }
-
-        /* LIGHTBOX */
-        #lightbox {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; cursor: zoom-out;
-        }
-        #lightbox img { max-width: 90%; max-height: 90%; border: 2px solid var(--accent-color); border-radius: 10px; }
-
-        /* --- ПОЛНОСТЬЮ ПЕРЕОПРЕДЕЛЯЕМ СТИЛИ БАЛУНА ЯНДЕКС КАРТ --- */
-        .ymaps-2-1-79-balloon {
-            background-color: transparent !important;
-            box-shadow: none !important;
-        }
-        .ymaps-2-1-79-balloon__layout {
-            background-color: rgba(10, 10, 10, 0.95) !important;
-            border: 2px solid var(--accent-color) !important;
-            border-radius: 15px !important;
-            box-shadow: 0 10px 25px rgba(255,0,0,0.4) !important;
-            backdrop-filter: blur(5px);
-        }
-        .ymaps-2-1-79-balloon__content {
-            padding: 0 !important;
-            background: transparent !important;
-        }
-        .ymaps-2-1-79-balloon__tail { display: none !important; }
-        .ymaps-2-1-79-balloon__close-button {
-            filter: invert(1);
-            opacity: 0.7;
-        }
-        .ymaps-2-1-79-balloon__close-button:hover { opacity: 1; }
-
     </style>
 </head>
 <body>
 
-    <!-- 1. КАРТА -->
-    <div id="map"></div>
+    <header class="header">
+        <div class="brand">SYS.SHOPPY //</div>
+        <div class="version">ONLINE</div>
+    </header>
 
-    <!-- 2. ЛОГОТИП С ИЕРОГЛИФАМИ НА ФОНЕ -->
-    <div class="header-logo">
-        <span class="logo-bg">ショッピー</span>
-        <span class="logo-fg">Shoppy</span>
-    </div>
+    <section class="hero">
+        <span class="tech-label">[ <span class="highlight">SYSTEM_BOOT</span> ]</span>
+        <div class="hero-title-container">
+            <div class="hero-bg-text">ショッピー</div>
+            <h1>SHOPPY</h1>
+        </div>
+        <p class="hero-slogan">Каждый может одеваться как хочет.</p>
+        <button class="btn"><a class="link_to_map" href="./map.html">Открыть приложение</a></button>
+    </section>
 
-    <!-- 3. ГЛАВНОЕ МЕНЮ -->
-    <div class="ui-container" id="main-ui">
-        <button class="dropdown-toggle" id="dropdownBtn">
-            <span>МАГАЗИНЫ</span>
-            <span id="dropdownIcon">▲</span>
-        </button>
+    <section class="problem">
+        <span class="tech-label">SYS.DATA // <span class="highlight">ИДЕНТИФИКАЦИЯ_ПРОБЛЕМЫ</span></span>
+        <div class="problem-box">
+            <h2 class="section-title">Массмаркет захватил улицы</h2>
+            <p class="problem-text">Найти действительно уникальную одежду стало настоящим испытанием. Если вы хотите выделяться из толпы, стандартные торговые центры больше не подходят — рынок переполнен однотипными вещами.</p>
+        </div>
+    </section>
 
-        <div class="dropdown-content" id="dropdownContent">
-            <div class="filters">
-                <h3>СТИЛЬ:</h3>
-                <button class="filter-btn active" data-filter="all">ВСЕ</button>
-                <button class="filter-btn" data-filter="avangard">Авангард</button>
-                <button class="filter-btn" data-filter="techwear">Теквир</button>
-                <button class="filter-btn" data-filter="vintage">Винтаж</button>
+    <section class="solution">
+        <span class="tech-label">SYS.DATA // <span class="highlight">ПРОТОКОЛ_РЕШЕНИЯ</span></span>
+        <p class="solution-desc">Наше решение — приложение с отобранными магазинами.</p>
+
+        <div class="grid-1px">
+            <div class="card">
+                <div class="crosshair"></div>
+                <span class="tech-label">FEAT_01</span>
+                <h3>Интерактивная карта</h3>
             </div>
-            <div class="store-list" id="storeList"></div>
-        </div>
-    </div>
-
-    <!-- 4. КАРТОЧКА МАГАЗИНА -->
-    <div id="store-panel">
-        <div class="panel-header">
-            <h2 id="sp-name">Название</h2>
-            <button class="close-btn" onclick="closeStorePanel()">×</button>
-        </div>
-        <div class="panel-content">
-            <div class="tags-container">
-                <span class="tag accent" id="sp-style">Стиль</span>
-                <span class="tag" id="sp-price">$$$</span>
-                <span class="tag" id="sp-dist" id="distance-tag">Дистанция</span>
+            <div class="card">
+                <div class="crosshair"></div>
+                <span class="tech-label">FEAT_02</span>
+                <h3>Уникальные магазины</h3>
             </div>
-            
-            <div class="gallery" id="sp-gallery"></div>
-            <p class="panel-desc" id="sp-desc">Описание</p>
-            <button class="route-btn" id="sp-route-btn">ПРОЛОЖИТЬ МАРШРУТ</button>
+            <div class="card">
+                <div class="crosshair"></div>
+                <span class="tech-label">FEAT_03</span>
+                <h3>Умная фильтрация</h3>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- 5. LIGHTBOX -->
-    <div id="lightbox" onclick="this.style.display='none'">
-        <img id="lightbox-img" src="" alt="Zoomed image">
-    </div>
+    <section class="how-it-works">
+        <span class="tech-label">SYS.DATA // <span class="highlight">АЛГОРИТМ</span></span>
+        <h2 class="section-title">Как это работает</h2>
 
-    <!-- ЛОГИКА -->
-    <script>
-        const stores = [
-            {
-                id: 1,
-                name: "VOID STORE",
-                style: "avangard", styleName: "АВАНГАРД",
-                price: "Высокая цена", distance: "Центр",
-                desc: "Темный концепт-стор с асимметричным кроем. Эксклюзивные дропы от локальных дизайнеров, работающих с деконструкцией. Вход через арку, дверь без вывески.",
-                coords: [55.761244, 37.618423],
-                photos: [
-                    "https://picsum.photos/seed/void1/400/600",
-                    "https://picsum.photos/seed/void2/400/600",
-                    "https://picsum.photos/seed/void3/400/600"
-                ]
-            },
-            {
-                id: 2,
-                name: "CYBER CITY",
-                style: "techwear", styleName: "ТЕКВИР",
-                price: "Средняя цена", distance: "Арбат",
-                desc: "Технологичная одежда, много карманов, Gore-Tex мембраны и стропы. Идеально для городских ниндзя. Только по предварительной записи.",
-                coords: [55.742023, 37.598711],
-                photos: [
-                    "https://picsum.photos/seed/cyber1/400/600",
-                    "https://picsum.photos/seed/cyber2/400/600",
-                    "https://picsum.photos/seed/cyber3/400/600"
-                ]
-            },
-            {
-                id: 3,
-                name: "ARCHIVE 99",
-                style: "vintage", styleName: "ВИНТАЖ",
-                price: "Очень дорого", distance: "Китай-Город",
-                desc: "Редкий японский архив, вещи с показов 90-х и нулевых. Коллекционные айтемы, которые нельзя найти в обычных секондах.",
-                coords: [55.757131, 37.631698],
-                photos: [
-                    "https://picsum.photos/seed/arch1/400/600",
-                    "https://picsum.photos/seed/arch2/400/600",
-                    "https://picsum.photos/seed/arch3/400/600"
-                ]
-            }
-        ];
+        <div class="steps-container">
+            <div class="step-row">
+                <div class="step-num">01</div>
+                <div class="step-content">Открываете приложение</div>
+            </div>
+            <div class="step-row">
+                <div class="step-num">02</div>
+                <div class="step-content">Настраиваете фильтры (стиль, цена, удалённость)</div>
+            </div>
+            <div class="step-row">
+                <div class="step-num">03</div>
+                <div class="step-content">Идете в выбранный магазин</div>
+            </div>
+        </div>
+    </section>
 
-        let map;
-        let placemarks = [];
-
-        const storePanel = document.getElementById('store-panel');
-        const mainUI = document.getElementById('main-ui');
+    <section class="team">
+        <span class="tech-label">SYS.DATA // <span class="highlight">АВТОРИЗАЦИЯ_КОМАНДЫ</span></span>
         
-        const dropdownBtn = document.getElementById('dropdownBtn');
-        const dropdownContent = document.getElementById('dropdownContent');
-        const dropdownIcon = document.getElementById('dropdownIcon');
+        <div class="team-box">
+            <h3>UNITED SOCIETY OF AVANGARD</h3>
+            <p>Creators & Architects</p>
+        </div>
+    </section>
 
-        dropdownBtn.addEventListener('click', () => {
-            dropdownContent.classList.toggle('collapsed');
-            dropdownIcon.textContent = dropdownContent.classList.contains('collapsed') ? '▼' : '▲';
-        });
+    <footer class="footer">
+        <div class="footer-brand">SHOPPY PROJECT &copy; 2026</div>
+        <button class="btn"><a class="link_to_map" href="./map.html">Открыть приложение</a></button>
+    </footer>
 
-        const storeList = document.getElementById('storeList');
-        function renderList() {
-            storeList.innerHTML = '';
-            stores.forEach(store => {
-                const item = document.createElement('div');
-                item.className = 'store-item';
-                item.dataset.style = store.style;
-                item.innerHTML = `
-                    <h4 class="store-title">${store.name}</h4>
-                    <div class="store-style">[ ${store.styleName} ]</div>
-                `;
-                item.addEventListener('click', () => {
-                    if (map) map.setCenter(store.coords, 15, { duration: 400 });
-                    openStorePanel(store.id); 
-                });
-                storeList.appendChild(item);
-            });
-        }
-
-        ymaps.ready(initMap);
-
-        function initMap() {
-            map = new ymaps.Map("map", {
-                center: [55.753215, 37.622504],
-                zoom: 13,
-                controls: [] 
-            });
-
-            document.querySelector('.ymaps-2-1-79-map').style.filter = 'grayscale(1) invert(1) contrast(1.1)';
-
-            const circleLayout = ymaps.templateLayoutFactory.createClass(
-                '<div style="width:20px; height:20px; background-color:#ffffff; border:3px solid #ff0000; border-radius:50%; box-sizing:border-box; box-shadow: 0 0 10px rgba(0,0,0,0.8); transform: translate(-10px, -10px);"></div>'
-            );
-
-            stores.forEach(store => {
-                const balloonHTML = `
-                    <div style="padding: 20px 15px 15px; text-align: center; min-width: 180px;">
-                        <h3 style="margin: 0 0 5px 0; color: #fff; font-family: 'Courier New', monospace; font-size: 20px; text-transform: uppercase; letter-spacing: 1px;">${store.name}</h3>
-                        <div style="color: #ff0000; font-size: 12px; margin-bottom: 15px; font-family: 'Courier New', monospace; font-weight: bold;">[ ${store.styleName} ]</div>
-                        <button style="background: #fff; color: #000; border: none; padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; width: 100%; font-family: 'Courier New', monospace; font-size: 14px; transition: 0.2s;" 
-                        onmouseover="this.style.background='#ff0000'; this.style.color='#fff';" 
-                        onmouseout="this.style.background='#fff'; this.style.color='#000';"
-                        onclick="window.openStorePanel(${store.id})">ОТКРЫТЬ КАРТОЧКУ</button>
-                    </div>
-                `;
-
-                const placemark = new ymaps.Placemark(store.coords, {
-                    balloonContent: balloonHTML,
-                    hintContent: store.name
-                }, {
-                    iconLayout: circleLayout,
-                    iconShape: { type: 'Circle', coordinates: [0, 0], radius: 10 }
-                });
-                
-                placemark.storeId = store.id;
-                placemark.storeStyle = store.style;
-                
-                placemarks.push(placemark);
-                map.geoObjects.add(placemark);
-            });
-        }
-
-        window.openStorePanel = function(id) {
-            const store = stores.find(s => s.id === id);
-            if(!store) return;
-
-            document.getElementById('sp-name').textContent = store.name;
-            document.getElementById('sp-style').textContent = store.styleName;
-            document.getElementById('sp-price').textContent = store.price;
-            document.getElementById('sp-dist').textContent = store.distance;
-            document.getElementById('sp-desc').textContent = store.desc;
-
-            const gallery = document.getElementById('sp-gallery');
-            gallery.innerHTML = '';
-            store.photos.forEach(photoUrl => {
-                const img = document.createElement('img');
-                img.src = photoUrl;
-                img.onclick = () => openLightbox(photoUrl);
-                gallery.appendChild(img);
-            });
-
-            // Настройка кнопки маршрута - СНАЧАЛА ИЩЕМ ГЕОПОЗИЦИЮ, ПОТОМ ПЕРЕКИДЫВАЕМ
-            const routeBtn = document.getElementById('sp-route-btn');
-            routeBtn.onclick = () => openYandexMapsWithRealGeo(store.coords);
-
-            map.balloon.close();
-            storePanel.classList.add('active');
-            
-            if(window.innerWidth <= 768) {
-                mainUI.style.opacity = '0';
-                mainUI.style.pointerEvents = 'none';
-            }
-        };
-
-        window.closeStorePanel = function() {
-            storePanel.classList.remove('active');
-            if(window.innerWidth <= 768) {
-                mainUI.style.opacity = '1';
-                mainUI.style.pointerEvents = 'auto';
-            }
-        };
-
-        function openLightbox(url) {
-            document.getElementById('lightbox-img').src = url;
-            document.getElementById('lightbox').style.display = 'flex';
-        }
-
-        // --- УМНЫЙ ПЕРЕХОД В ЯНДЕКС КАРТЫ С КООРДИНАТАМИ ---
-        function openYandexMapsWithRealGeo(storeCoords) {
-            const routeBtn = document.getElementById('sp-route-btn');
-            routeBtn.innerHTML = 'ИЩЕМ ГЕОПОЗИЦИЮ...';
-            
-            // Если браузер поддерживает геолокацию
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    // УСПЕХ: Пользователь разрешил, координаты получены
-                    function(position) {
-                        routeBtn.innerHTML = 'ПРОЛОЖИТЬ МАРШРУТ'; // возвращаем текст
-                        const userLat = position.coords.latitude;
-                        const userLon = position.coords.longitude;
-                        
-                        // Строим ссылку, жестко прописывая координаты ОТ (user) ДО (store)
-                        const yandexUrl = `https://yandex.ru/maps/?rtext=${userLat},${userLon}~${storeCoords[0]},${storeCoords[1]}&rtt=pd`;
-                        window.open(yandexUrl, '_blank');
-                    },
-                    // ОШИБКА: Пользователь запретил или нет датчика
-                    function(error) {
-                        routeBtn.innerHTML = 'ПРОЛОЖИТЬ МАРШРУТ';
-                        console.warn("Ошибка гео:", error.message);
-                        
-                        // Если ошибка, используем параметр ~, который заставит сам Яндекс запросить геопозицию
-                        const fallbackUrl = `https://yandex.ru/maps/?rtext=~${storeCoords[0]},${storeCoords[1]}&rtt=pd`;
-                        window.open(fallbackUrl, '_blank');
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                );
-            } else {
-                // Если браузер совсем древний
-                routeBtn.innerHTML = 'ПРОЛОЖИТЬ МАРШРУТ';
-                const fallbackUrl = `https://yandex.ru/maps/?rtext=~${storeCoords[0]},${storeCoords[1]}&rtt=pd`;
-                window.open(fallbackUrl, '_blank');
-            }
-        }
-
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                const selectedStyle = e.target.dataset.filter;
-
-                document.querySelectorAll('.store-item').forEach(item => {
-                    item.classList.toggle('hidden', selectedStyle !== 'all' && item.dataset.style !== selectedStyle);
-                });
-
-                placemarks.forEach(pm => {
-                    const isVisible = selectedStyle === 'all' || pm.storeStyle === selectedStyle;
-                    pm.options.set('visible', isVisible);
-                    if(!isVisible) pm.balloon.close();
-                });
-            });
-        });
-
-        renderList();
-    </script>
 </body>
 </html>
